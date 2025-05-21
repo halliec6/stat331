@@ -1,0 +1,56 @@
+---
+title: "P3: Joining the Data"
+author: "Hallie Christopherson, Meyli Jaeger, Tyler Luby Howard, and Spruha Nayak"
+format: 
+  html:
+    embed-resources: true
+    code-tools: true
+    toc: true
+editor: source
+execute: 
+  error: true
+  echo: true
+  message: false
+  warning: false
+---
+
+## The Data
+
+#### Setup
+```{r setup}
+library(tidyverse)
+library(janitor)
+```
+
+```{r load_data}
+sugar <- read_csv('./sugar.csv')
+spending <- read_csv('./spending.csv')
+```
+
+```{r exploring_data, results='hide'}
+head(sugar)
+head(spending)
+
+spending <- spending %>%
+  mutate(country = trimws(country)) %>%
+  clean_names()
+
+sugar <- sugar %>%
+  mutate(country = trimws(country)) %>%
+  clean_names()
+```
+#### Joining Datasets (Long)
+```{r joining_data}
+spending <- spending %>%
+  pivot_longer(-country, names_to = "year", values_to = "spending") %>%
+  mutate(year = as.integer(stringr::str_extract(year, "\\d{4}")))
+sugar <- sugar %>%
+  pivot_longer(-country, names_to = "year", values_to = "sugar") %>%
+  mutate(year = as.integer(stringr::str_extract(year, "\\d{4}")))
+
+sugar_spending <- full_join(spending, sugar, by = c("country", "year")) %>%
+  filter(!(is.na(spending) & is.na(sugar)))
+sugar_spending
+```
+
+
