@@ -18,39 +18,80 @@ execute:
 
 #### Setup
 ```{r setup}
+# Load libraries
 library(tidyverse)
 library(janitor)
+library(knitr)
 ```
 
 ```{r load_data}
+# Load datasets
 sugar <- read_csv('./sugar.csv')
 spending <- read_csv('./spending.csv')
 ```
 
 ```{r exploring_data, results='hide'}
-head(sugar)
-head(spending)
+# Look at how many columns and rows
+dim(sugar)
+dim(spending)
 
-spending <- spending %>%
-  mutate(country = trimws(country)) %>%
-  clean_names()
+# See unique values of countries
+unique(sugar$country)[1:10]
+unique(spending$country)[1:10]
 
-sugar <- sugar %>%
-  mutate(country = trimws(country)) %>%
-  clean_names()
+# See first 6 rows of each dataset
+sugar |>
+  head() |>
+  kable()
+
+spending |>
+  head() |>
+  kable()
 ```
-#### Joining Datasets (Long)
+#### Cleaning and Joining Datasets (Long)
 ```{r joining_data}
-spending <- spending %>%
-  pivot_longer(-country, names_to = "year", values_to = "spending") %>%
-  mutate(year = as.integer(stringr::str_extract(year, "\\d{4}")))
-sugar <- sugar %>%
-  pivot_longer(-country, names_to = "year", values_to = "sugar") %>%
-  mutate(year = as.integer(stringr::str_extract(year, "\\d{4}")))
+# Clean spending data
+spending_long <- spending |>
+  mutate(country = trimws(country)) |>
+  clean_names() |>
+  pivot_longer(-country, names_to = "year", values_to = "spending") |>
+  mutate(year = as.integer(str_extract(year, "\\d{4}")))
 
-sugar_spending <- full_join(spending, sugar, by = c("country", "year")) %>%
+spending_long <- spending_long |>
+  distinct(country, year, .keep_all = TRUE) |>
+  filter(!is.na(country) & !is.na(year))
+
+# Clean sugar data
+sugar_long <- sugar |>
+  mutate(country = trimws(country)) |>
+  clean_names() |>
+  pivot_longer(-country, names_to = "year", values_to = "sugar") |>
+  mutate(year = as.integer(str_extract(year, "\\d{4}")))
+
+sugar_long <- sugar_long |>
+  distinct(country, year, .keep_all = TRUE) |>
+  filter(!is.na(country) & !is.na(year))
+
+# Confirm all values are numeric and not like "1.1k" or "3.6"
+sugar_long |>
+  filter(str_detect(sugar, "k"))
+spending_long |> 
+  filter(str_detect(spending, "k"))
+
+str(sugar_long$sugar)
+str(spending_long$spending)
+
+# Join and remove rows with both values missing
+sugar_spending <- full_join(spending_long, sugar_long, by = c("country", "year")) |>
   filter(!(is.na(spending) & is.na(sugar)))
-sugar_spending
 ```
 
-
+#### New Joined Dataset
+```{r joined_datset}
+# Check the joined dataset
+glimpse(sugar_spending)
+summary(sugar_spending)
+sugar_spending |>
+  head() |>
+  kable()
+```
