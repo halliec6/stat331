@@ -15,6 +15,18 @@ execute:
 ---
 
 ## The Data
+##### *Total Health Spending per person (International $)*
+
+##### Source: https://www.fao.org/faostat/en/#home 
+
+Shows the average health expenditure per person, expressed in international dollars using PPP (purchasing power parity)
+
+##### *Sugar per person (g per day)*
+
+##### Source: https://www.who.int/gho/en/ 
+
+Quantity of food consumption of sugars and sweeteners (g per person per day)
+2004 data is a rough extrapolation
 
 #### Setup
 ```{r setup}
@@ -95,3 +107,19 @@ sugar_spending |>
   head() |>
   kable()
 ```
+#### Write-up
+For this analysis, we are exploring two variables integral to understanding the evolution of global nutritional health and healthcare spending. The first is the number of sugars and sweeteners per person (measured in g per day). This data originates from the United Nations’ Food and Agriculture Organization’s FAOSTAT database, and is compiled by Gapminder. Data from 2004 was missing, therefore, 2004 is a rough extrapolation of values calculated by Gapminder.
+
+The second variable is the total health spending per person as measured in international dollars, represented using purchasing power parity (PPP), a currency conversion rate that equalizes different currencies by removing differences in price levels amongst countries. This data comes from the World Health Organization’s Global Health Expenditure Database (GHED). 
+
+We hypothesize that these two variables are strongly related and that increases in sugar consumption result in rising health spending worldwide per person. An article from UC Berkeley Public Health written by Berthold (2023) supports this, explaining that a local soda tax in Oakland, CA resulted in a 26.8% drop in the purchase of sugar-sweetened beverages. We are exploring whether preventing diseases associated with these sugary beverages (diabetes, heart disease, stroke, gum disease) reduces health care costs, and are extrapolating this pattern to a global sphere.
+
+To prepare the data for analysis, we combined two datasets: one reporting average sugar consumption per person per day and the other detailing health care spending per person, both measured by country and year. Before merging, we ensured consistency in country names and removed any observations lacking year or country information. Each dataset originally contained a wide format with multiple year columns; we reshaped them so that each row represented a single country-year observation. We identified and removed duplicate records for the same country and year to avoid overrepresentation. The final cleaned dataset contains 9,781 rows, incorporating all meaningful observations while excluding any instance where both sugar and spending values are missing. The original datasets had 179 and 190 rows, respectively, reflecting how the reshaping and merging process expanded the data based on multiple years per country.
+
+### References
+Berthold, J. (2023, April 21). Sugary drink tax improves health, lowers health care costs: Sweetened beverage purchases drop 27% in Oakland, signaling potential impact of national legislation. University of California, Berkeley. Sugary drink tax improves health, lowers health care costs
+
+Food and Agriculture Organization. (2024). FAOSTAT: Sugar & sweeteners food supply data. http://data.un.org/Data.aspx?q=Sugar&d=FAO&f=itemCode:2909
+
+World Health Organization. (2024). Global Health Expenditure Database. https://apps.who.int/nha/database
+
