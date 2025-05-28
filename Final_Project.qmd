@@ -174,7 +174,9 @@ anim_plot <- ggplot(sugar_spending_clean, aes(x = sugar, y = spending)) +
 
 animate(anim_plot, nframes = 100, fps = 10, renderer = gifski_renderer())
 ```
+This animation shows how the relationship between sugar consumption (g/person/day) and health spending (Intl $/person) has changed across countries from 1961 to 2018. Each point represents a country in a given year, and the red line shows the trend for that year using linear regression.
 
+Overall, we see that as sugar consumption increases, health spending also tends to rise, though the strength of this relationship varies over time. This helps illustrate how global patterns in diet may relate to healthcare costs.
 
 ## Linear Model
 To further examine the relationship between sugar consumption and health spending, we fit a linear regression model to our data, specifically using country-level averages. Meaning, we summarized our data set by averaging sugar consumption and health spending across all years by country. We decided to do this since it stabilizes our trendlines since it abstracts away year to year fluctuations while still incorporating a long period of data collection.
