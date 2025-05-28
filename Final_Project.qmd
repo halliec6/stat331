@@ -40,6 +40,7 @@ library(tidyverse)
 library(janitor)
 library(knitr)
 library(gganimate)
+library(gifski)
 ```
 
 ```{r load_data}
@@ -170,6 +171,8 @@ anim_plot <- ggplot(sugar_spending_clean, aes(x = sugar, y = spending)) +
        y = "Health Spending (Intl $/person)") +
   transition_time(year) +
   ease_aes('linear')
+
+animate(anim_plot, nframes = 100, fps = 10, renderer = gifski_renderer())
 ```
 
 
