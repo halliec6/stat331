@@ -173,3 +173,24 @@ anim_plot <- ggplot(sugar_spending_clean, aes(x = sugar, y = spending)) +
 ```
 
 
+## Linear Model
+To further examine the relationship between sugar consumption and health spending, we fit a linear regression model to our data, specifically using country-level averages. Meaning, we summarized our data set by averaging sugar consumption and health spending across all years by country. We decided to do this since it stabilizes our trendlines since it abstracts away year to year fluctuations while still incorporating a long period of data collection.
+
+```{r linear_model, results='hide'}
+lm_model <- lm(avg_spending ~ avg_sugar, data = country_summary)
+model_summary <- summary(lm_model)
+model_summary
+```
+
+```{r coefficient_table}
+coefficients <- coef(model_summary)
+coefficients_df <- data.frame(
+  Estimate = round(coefficients[, "Estimate"], 3),
+  Std_Error = round(coefficients[, "Std. Error"], 3),
+  t_value = round(coefficients[, "t value"], 3),
+  p_value = signif(coefficients[, "Pr(>|t|)"], 3)
+)
+
+kable(coefficients_df, caption = "Linear Regression Coefficients")
+```
+
