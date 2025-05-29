@@ -6,6 +6,7 @@ format:
     embed-resources: true
     code-tools: true
     toc: true
+    code-fold: true
 editor: source
 execute: 
   error: true
@@ -216,14 +217,17 @@ variance_residuals <- var(residuals(lm_model))
 r_2_val <- variance_fitted/variance_response
 
 model_fit <- data.frame(
-  var_name = c("variance_response", "variance_fitted",
-               "variance_residuals", "r_2_val"),
+  var_name = c("variance in response values", 
+               "variance in fitted values",
+               "variance in residuals", 
+               "r-squared"),
   vals = round(c(variance_response, variance_fitted,
            variance_residuals, r_2_val), 2)
 )
  
 kable(model_fit, 
-      col.names = c("Model Fit Variables", "Value")) |>
+      col.names = c("Model Fit Variables", "Value"),
+      caption = "Analyzing Model Variance") |>
   kable_classic(full_width = F,
                 bootstrap_options = "striped") |> 
   row_spec(row = 0, bold = T, align = "c")
