@@ -276,8 +276,9 @@ kable(model_fit,
 
 The R² value of 0.248 indicates that sugar consumption explains 24.8% of the variability in health spending across countries. This suggests a moderate association, but also implies that 75.2% of spending variation is likely driven by a multitude of other factors, such as economic development or healthcare policy.
 
-## Cross Validation
+# Cross Validation
 
+### Implement k-fold cross validation
 ```{r}
 #0 choose a value for k, use as many folds as possible, keep the sample size in ea to be at least 10
 k <- 15
@@ -301,11 +302,13 @@ compute_r2 <- function(fold_num, data){
   #use predict to generate predictions for observations that are in fold x (validation set)
   predictions <- predict(lm_model, testing)
   
-  #calculate the model r2 for fold x (validation) as the variance of the fitted (predicted) values divided by the variance of the outcome
-  fitted_variance <- var(predictions)
-  outcome_variance <- var(testing$avg_spending)
+  # Compute the sum of squared residuals
+  ss_res <- sum((testing$avg_spending - predictions)^2)
   
-  r_2 <- fitted_variance / outcome_variance
+  # Compute the total sum of squares
+  ss_tot <- sum((testing$avg_spending - mean(testing$avg_spending))^2)
+  
+  r_2 <- 1 - (ss_res / ss_tot)
     
   return(r_2)
 }
@@ -315,6 +318,32 @@ compute_r2 <- function(fold_num, data){
 #end with a vector of k r^2 values
 performance <- map_dbl(1:k, ~compute_r2(.x, k_groups))
 performance
+
+```
+
+### Plot the results
+```{r}
+# r^2 vector into a data frame
+r2_df <- data.frame(
+  fold = 1:length(performance),
+  r_squared = performance)
+
+# average r^2
+mean_r2 <- mean(r2_df$r_squared)
+
+ggplot(r2_df, aes(x = r_squared)) +
+  geom_histogram(binwidth = 0.05, fill = "steelblue", color = "white", alpha = 0.8) +
+  geom_vline(xintercept = mean_r2, color = "red", linetype = "dashed", size = 1) +
+  annotate("text",
+           x = mean_r2 + 0.02,
+           y = 1.5,
+           label = paste0("Mean R² = ", round(mean_r2, 3)),
+           color = "red",
+           hjust = 0) +
+  labs(title = "Distribution of Cross-Validated R² Values",
+       x = "R² Value",
+       y = "Number of Folds") +
+  xlim(-20, 3)
 
 ```
 
