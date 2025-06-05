@@ -151,7 +151,7 @@ We validated our join by identifying unmatched country-year pairs using anti_joi
 
 
 
-# PC4: Joining Data 
+# PC4: Linear Regression
 
 ## Data Visualization
 
@@ -276,7 +276,7 @@ kable(model_fit,
 
 The R² value of 0.248 indicates that sugar consumption explains 24.8% of the variability in health spending across countries. This suggests a moderate association, but also implies that 75.2% of spending variation is likely driven by a multitude of other factors, such as economic development or healthcare policy.
 
-# Cross Validation
+# PC5: Cross Validation
 
 ### Implement k-fold cross validation
 ```{r}
