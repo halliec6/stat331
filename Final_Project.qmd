@@ -330,7 +330,7 @@ r2_df <- data.frame(
 mean_r2 <- mean(r2_df$r_squared)
 
 ggplot(r2_df, aes(x = r_squared)) +
-  geom_histogram(binwidth = 0.05, fill = "steelblue", color = "white", alpha = 0.8) +
+  geom_histogram(fill = "steelblue", color = "white", alpha = 0.8) +
   geom_vline(xintercept = mean_r2, color = "red", linetype = "dashed", size = 1) +
   labs(title = "Distribution of Cross-Validated R² Values",
        x = "R² Value",
@@ -341,14 +341,14 @@ ggplot(r2_df, aes(x = r_squared)) +
            label = paste0("Mean R² = ", round(mean_r2, 3)),
            color = "red",
            hjust = 0) +
-  xlim(0, 3)
+  xlim(0, 16)
 
 ```
-The histogram displays the distribution of R² values across the 15 folds used in cross-validation. The average R² is approximately 1.492, indicated by the red dashed line. This suggests that, on average, the model is capturing more variance in the validation set than would be expected based on just fitting to the training data — which can occur when using R² as a predictive performance metric rather than a strict measure of in-sample fit.
+The histogram displays the distribution of R² values across the 15 folds used in cross-validation. The average R² is approximately 1.492, indicated by the red dashed line. This suggests that, on average, the model is capturing a substantial amount of variability in the validation sets, even exceeding 1. While R² values above 1 are not common in traditional in-sample regression, they can occur in predictive contexts, particularly in cross-validation where prediction errors are compared to variance within a fold.
 
-Most R² values fall between 0 and 2, with a concentration near 0.25 to 0.75, indicating that the model often explains a moderate portion of the variability in health spending. However, there is still considerable variation in R² between folds, reflecting differences in how well the model generalizes across different subsets of countries.
+The R² values across folds range from slightly below zero up to over 15, with one extreme outlier of 15.11. Most R² values fall between 0 and 1, indicating that the model generally performs moderately well in predicting unseen data. The variation in performance across folds suggests the model’s predictive power is sensitive to which countries are in each fold — likely reflecting regional, economic, or policy-driven differences in healthcare spending.
 
-This spread suggests that the model has some predictive power, but the performance is not entirely consistent, possibly due to regional or structural differences in sugar consumption and healthcare spending relationships. Importantly, there is no clear evidence of overfitting: the model performs reasonably well on the held-out folds, and the average predictive R² exceeds 0, indicating the model is better than using the mean alone.
+There is no strong evidence of overfitting: the model performs decently on held-out data in most cases. However, the inconsistency across folds and the influence of the outlier suggest that additional predictors or a more flexible model may improve stability and overall fit.
 
 # References
 Berthold, J. (2023, April 21). Sugary drink tax improves health, lowers health care costs: Sweetened beverage purchases drop 27% in Oakland, signaling potential impact of national legislation. University of California, Berkeley. Sugary drink tax improves health, lowers health care costs. <https://publichealth.berkeley.edu/articles/spotlight/research/sugary-drink-tax-improves-health>
