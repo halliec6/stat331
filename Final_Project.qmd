@@ -165,15 +165,15 @@ country_summary <- sugar_spending |>
   group_by(country) |>
   summarize(avg_sugar = mean(sugar, na.rm = TRUE),
             avg_spending = mean(spending, na.rm = TRUE)) |>
+  mutate(log_spending = log(avg_spending)) |>
   drop_na()
 
 # Scatterplot with regression line
-ggplot(country_summary, aes(x = avg_sugar, y = avg_spending)) +
-  geom_point(alpha = 0.5, shape = 19) +
+ggplot(country_summary, aes(x = avg_sugar, y = log_spending)) +  geom_point(alpha = 0.5, shape = 19) +
   geom_smooth(method = "lm", se = TRUE, color = "steelblue") +
   labs(title = "Average Health Spending vs. Sugar Consumption by Country",
        x = "Average Daily Sugar Consumption (g per person)",
-       y = "Average Health Spending (Intl $ per person)")
+       y = "Log of Average Health Spending (Intl $ per person)")
 ```
 The upward-sloping regression line suggests that, in general, countries with higher sugar consumption tend to spend more on health care per person. However, the wide spread of the points around the line indicates that other factors beyond sugar intake likely influence health spending as well.
 
@@ -184,16 +184,16 @@ To examine how this relationship evolves over time, we created an animated plot 
 ```{r animated_plot, message=FALSE, warning=FALSE}
 
 sugar_spending_clean <- sugar_spending |>
-  filter(!is.na(sugar) & !is.na(spending))
+  filter(!is.na(sugar) & !is.na(spending)) |>
+  mutate(log_spending = log(spending))
 
-anim_plot <- ggplot(sugar_spending_clean, aes(x = sugar, 
-                                              y = spending)) +
+anim_plot <- ggplot(sugar_spending_clean, aes(x = sugar, y = log_spending)) +
   geom_point(alpha = 0.5, shape = 19) +
   geom_smooth(method = "lm", se = FALSE, color = "steelblue") +
-  labs(title = "Health Spending vs Sugar Consumption Over Time",
+  labs(title = "Log(Health Spending) vs Sugar Consumption Over Time",
        subtitle = "Year: {frame_time}",
        x = "Sugar Consumption (g/person/day)",
-       y = "Health Spending (Intl $/person)") +
+       y = "Log(Health Spending in Intl $/person)") +
   transition_time(year) +
   ease_aes('linear')
 
@@ -209,7 +209,7 @@ While the overall association remains positive, the strength and spread of this 
 To further examine the relationship between sugar consumption and health spending, we fit a linear regression model using average sugar consumption as the predictor and average health spending as the response, using country-level averages. We summarized our data set by averaging sugar consumption and health spending across all years by country. This stabilizes the trendline under animation, as it abstracts away intra-year fluctuations while still incorporating an adequately long period of data collection.
 
 ```{r linear_model, results='hide'}
-lm_model <- lm(avg_spending ~ avg_sugar, data = country_summary)
+lm_model <- lm(log_spending ~ avg_sugar, data = country_summary)
 model_summary <- summary(lm_model)
 model_summary
 ```
@@ -217,10 +217,10 @@ model_summary
 We fit the following linear regression model:
 
 $$
-\hat{y} = -502.829 + 14.035x
+\hat{y} = 2.665 + .030x
 $$
 
-where $\hat{y}$ is average healthcare spending per person per year, and $x$ is average daily sugar intake (g/person/day).
+where $\hat{y}$ is the log curve applied to the average healthcare spending per person per year, and $x$ is average daily sugar intake (g/person/day).
 
 
 ```{r coefficient_table}
@@ -239,6 +239,7 @@ kable(coefficients_df, caption = "Linear Regression Coefficients")
 # min_sugar
 ```
 
+### RE-INTERPRET
 The intercept implies that countries with near-zero sugar consumption would have an estimated health spending of $-503 (not interpretable in isolation). The minimum observed sugar consumption across all countries was approximately 7.618 grams/day, confirming that the intercept at ~ -503 is an extrapolation outside the data range. The slope indicates that for every additional gram of sugar consumed per person per day, a country's average health spending increases by approximately $14.04 per year, holding other factors constant.
 
 ## Model Fit
@@ -248,7 +249,7 @@ The intercept implies that countries with near-zero sugar consumption would have
 The following table breaks down the total variation in the outcome variable into explained and unexplained components:
 
 ```{r variance}
-variance_response <- var(country_summary$avg_spending)
+variance_response <- var(country_summary$log_spending)
   
 variance_fitted <- var(lm_model$fitted.values)
   
@@ -297,14 +298,14 @@ compute_r2 <- function(fold_num, data){
   testing <- filter(data, fold  == fold_num)
   
   #fit regression model for all observations NOT in fold x
-  lm_model <- lm(avg_spending ~ avg_sugar, data = training)
+  lm_model <- lm(log_spending ~ avg_sugar, data = training)
   
   #use predict to generate predictions for observations that are in fold x (validation set)
   predictions <- predict(lm_model, testing)
   
   #calculate the model r2 for fold x (validation) as the variance of the fitted (predicted) values divided by the variance of the outcomeAdd commentMore actions
   fitted_variance <- var(predictions)
-  outcome_variance <- var(testing$avg_spending)
+  outcome_variance <- var(testing$log_spending)
   
   r_2 <- fitted_variance / outcome_variance
     
