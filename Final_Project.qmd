@@ -302,13 +302,11 @@ compute_r2 <- function(fold_num, data){
   #use predict to generate predictions for observations that are in fold x (validation set)
   predictions <- predict(lm_model, testing)
   
-  # Compute the sum of squared residuals
-  ss_res <- sum((testing$avg_spending - predictions)^2)
+  #calculate the model r2 for fold x (validation) as the variance of the fitted (predicted) values divided by the variance of the outcomeAdd commentMore actions
+  fitted_variance <- var(predictions)
+  outcome_variance <- var(testing$avg_spending)
   
-  # Compute the total sum of squares
-  ss_tot <- sum((testing$avg_spending - mean(testing$avg_spending))^2)
-  
-  r_2 <- 1 - (ss_res / ss_tot)
+  r_2 <- fitted_variance / outcome_variance
     
   return(r_2)
 }
@@ -334,19 +332,23 @@ mean_r2 <- mean(r2_df$r_squared)
 ggplot(r2_df, aes(x = r_squared)) +
   geom_histogram(binwidth = 0.05, fill = "steelblue", color = "white", alpha = 0.8) +
   geom_vline(xintercept = mean_r2, color = "red", linetype = "dashed", size = 1) +
+  labs(title = "Distribution of Cross-Validated R² Values",
+       x = "R² Value",
+       y = "Number of Folds") +
   annotate("text",
            x = mean_r2 + 0.02,
            y = 1.5,
            label = paste0("Mean R² = ", round(mean_r2, 3)),
            color = "red",
            hjust = 0) +
-  labs(title = "Distribution of Cross-Validated R² Values",
-       x = "R² Value",
-       y = "Number of Folds") +
-  xlim(-20, 3)
+  xlim(0, 3)
 
 ```
+The histogram displays the distribution of R² values across the 15 folds used in cross-validation. The average R² is approximately 1.492, indicated by the red dashed line. This suggests that, on average, the model is capturing more variance in the validation set than would be expected based on just fitting to the training data — which can occur when using R² as a predictive performance metric rather than a strict measure of in-sample fit.
 
+Most R² values fall between 0 and 2, with a concentration near 0.25 to 0.75, indicating that the model often explains a moderate portion of the variability in health spending. However, there is still considerable variation in R² between folds, reflecting differences in how well the model generalizes across different subsets of countries.
+
+This spread suggests that the model has some predictive power, but the performance is not entirely consistent, possibly due to regional or structural differences in sugar consumption and healthcare spending relationships. Importantly, there is no clear evidence of overfitting: the model performs reasonably well on the held-out folds, and the average predictive R² exceeds 0, indicating the model is better than using the mean alone.
 
 # References
 Berthold, J. (2023, April 21). Sugary drink tax improves health, lowers health care costs: Sweetened beverage purchases drop 27% in Oakland, signaling potential impact of national legislation. University of California, Berkeley. Sugary drink tax improves health, lowers health care costs. <https://publichealth.berkeley.edu/articles/spotlight/research/sugary-drink-tax-improves-health>
