@@ -1,5 +1,5 @@
 ---
-title: "331 Final Project"
+title: "Bittersweet Economics: How Sugar Intake Predicts Health Expenditures Worldwide"
 author: "Hallie Christopherson, Meyli Jaeger, Tyler Luby Howard, and Spruha Nayak"
 format: 
   html:
@@ -13,27 +13,9 @@ execute:
   echo: false
   message: false
   warning: false
+title-block-style: none
+author-title: none
 ---
-
-# PC3: Joining Data 
-
-## Dataset Sources
-
-***Total Health Spending per person (International $)***
-
-* Source: https://www.fao.org/faostat/en/#home
-
-* Shows the average health expenditure per person, expressed in international dollars using PPP (purchasing power parity)
-
-***Sugar per person (g per day)***
-
-* Source: https://www.who.int/gho/en/
-
-* Quantity of food consumption of sugars and sweeteners (g per person per day)
-2004 data is a rough extrapolation
-
-
-## Preprocessing Steps
 
 ```{r setup}
 # Load libraries
@@ -43,6 +25,8 @@ library(knitr)
 library(gganimate)
 library(gifski)
 library(kableExtra)
+library(ggrepel)
+library(gridExtra)
 ```
 
 ```{r load_data}
@@ -50,6 +34,105 @@ library(kableExtra)
 sugar <- read_csv('./sugar.csv')
 spending <- read_csv('./spending.csv')
 ```
+
+# Introduction
+
+Not only does the rise of processed foods have an impact on our individual health, but may also unleash cascading effects on global healthcare economies. 
+
+```{r split_panel_trends, fig.cap="*Global average sugar consumption and health spending per year*", fig.align="center", out.width="100%"}
+
+# Clean Sugar
+sugar_long <- sugar |>
+  clean_names() |>
+  pivot_longer(-country, names_to = "year", values_to = "sugar") |>
+  mutate(
+    country = trimws(country),
+    year = as.integer(str_extract(year, "\\d{4}")),
+    sugar = as.numeric(sugar)
+  ) |>
+  filter(!is.na(country), !is.na(year), !is.na(sugar)) |>
+  filter(year >= 1995, year <= 2010)
+
+# Compute average sugar consumption per year
+annual_sugar <- sugar_long |>
+  group_by(year) |>
+  summarize(avg_sugar = mean(sugar, na.rm = TRUE)) |>
+  drop_na()
+
+# Clean Spending
+spending_long <- spending |>
+  clean_names() |>
+  pivot_longer(-country, names_to = "year", values_to = "spending") |>
+  mutate(
+    country = trimws(country),
+    year = as.integer(str_extract(year, "\\d{4}")),
+    spending = as.numeric(spending)
+  ) |>
+  filter(!is.na(country), !is.na(year), !is.na(spending)) |>
+  filter(year >= 1995, year <= 2010)
+
+# Compute average health spending per year
+annual_spending <- spending_long |>
+  group_by(year) |>
+  summarize(avg_spending = mean(spending, na.rm = TRUE)) |>
+  drop_na()
+
+# Sugar plot
+p1 <- ggplot(annual_sugar, aes(x = year, y = avg_sugar)) +
+  geom_line(color = "steelblue", linewidth = 1.2) +
+  labs(
+    title = "Global Sugar Intake\n(1995–2010)",
+    x = NULL,
+    y = "Grams per person per day"
+  ) +
+  theme_minimal(base_size = 12) +
+  theme(
+    axis.title.x = element_blank(),  # removes extra bottom margin
+    plot.margin = margin(t = 10, r = 5, b = 5, l = 5)
+  )
+
+# Spending plot
+p2 <- ggplot(annual_spending, aes(x = year, y = avg_spending)) +
+  geom_line(color = "firebrick", linewidth = 1.2) +
+  labs(
+    title = "Global Health Spending\n(1995–2010)",
+    x = NULL,
+    y = "Intl $ per person (PPP)"
+  ) +
+  theme_minimal(base_size = 12) +
+  theme(
+    plot.margin = margin(t = 10, r = 5, b = 5, l = 5)
+  )
+
+# Combine side-by-side
+grid.arrange(p1, p2, ncol = 2)
+```
+
+In an era of rising rates of chronic disease and unprecedented sugar intake through foods more manufactured than grown, we sought to quantify the global impact of sugar intake on healthcare spending over time. We are exploring two variables integral to understanding this evolution of nutritional health. The first is the number of sugars and sweeteners per person (measured in g per day). This data originates from the United Nations’ Food and Agriculture Organization’s FAOSTAT database, and is compiled by Gapminder. Data from 2004 was missing, therefore, 2004 is a rough extrapolation of values calculated by Gapminder.
+
+The second variable is the total health spending per person as measured in international dollars, represented using purchasing power parity (PPP), a currency conversion rate that equalizes different currencies by removing differences in price levels amongst countries. This data comes from the World Health Organization’s Global Health Expenditure Database (GHED).
+
+We hypothesize that these two variables are strongly related and that increases in sugar consumption result in rising health spending worldwide per person. An article from UC Berkeley Public Health written by Berthold (2023) supports this, explaining that a local soda tax in Oakland, CA resulted in a 26.8% drop in the purchase of sugar-sweetened beverages. We are exploring whether preventing diseases associated with these sugary beverages (diabetes, heart disease, stroke, gum disease) reduces health care costs, and are extrapolating this pattern to a global sphere.
+
+## Dataset Sources
+
+***Total Health Spending per person (International $)***
+
+* Source: https://www.who.int/gho/en/
+
+* Shows the average health expenditure per person, expressed in international dollars using PPP (purchasing power parity)
+
+***Sugar per person (g per day)***
+
+* Source: https://www.fao.org/faostat/en/#home
+
+* Quantity of food consumption of sugars and sweeteners (g per person per day)
+2004 data is a rough extrapolation
+
+
+# Data Cleaning
+
+## Preprocessing Steps
 
 ```{r exploring_data, results='hide'}
 # Look at how many columns and rows
@@ -134,12 +217,7 @@ sugar_spending |>
 #   count()
 ```
 
-## Write-up
-For this analysis, we are exploring two variables integral to understanding the evolution of global nutritional health and healthcare spending. The first is the number of sugars and sweeteners per person (measured in g per day). This data originates from the United Nations’ Food and Agriculture Organization’s FAOSTAT database, and is compiled by Gapminder. Data from 2004 was missing, therefore, 2004 is a rough extrapolation of values calculated by Gapminder.
-
-The second variable is the total health spending per person as measured in international dollars, represented using purchasing power parity (PPP), a currency conversion rate that equalizes different currencies by removing differences in price levels amongst countries. This data comes from the World Health Organization’s Global Health Expenditure Database (GHED).
-
-We hypothesize that these two variables are strongly related and that increases in sugar consumption result in rising health spending worldwide per person. An article from UC Berkeley Public Health written by Berthold (2023) supports this, explaining that a local soda tax in Oakland, CA resulted in a 26.8% drop in the purchase of sugar-sweetened beverages. We are exploring whether preventing diseases associated with these sugary beverages (diabetes, heart disease, stroke, gum disease) reduces health care costs, and are extrapolating this pattern to a global sphere.
+## Cleaning Write-up
 
 To prepare the data for analysis, we combined two datasets: one reporting average sugar consumption per person per day and the other detailing health care spending per person, both measured by country and year. Each dataset originally contained a wide format with multiple year columns; we reshaped them so that each row represented a single country-year observation.
 
@@ -151,13 +229,11 @@ We validated our join by identifying unmatched country-year pairs using anti_joi
 
 
 
-# PC4: Linear Regression
+# Modeling the Relationship between Sugar Consumption and Health Spending by Country
 
-## Data Visualization
+## Static Visualization
 
-### Static Visualization: Sugar Consumption vs. Health Spending by Country
-
-The following scatterplot visualizes the relationship between sugar consumption and health care spending. Each point represents a single country’s average values across all recorded years. The estimated linear trend, shown in blue, highlights the direction of the association.
+The following scatterplot visualizes the relationship between sugar consumption and the log of health care spending. Each point represents a single country’s average values across all recorded years. The estimated linear trend, shown in blue, highlights the direction of the association.
 
 ```{r static_plot, message=FALSE, warning=FALSE}
 # Average values per country (over all years)
@@ -169,17 +245,20 @@ country_summary <- sugar_spending |>
   drop_na()
 
 # Scatterplot with regression line
-ggplot(country_summary, aes(x = avg_sugar, y = log_spending)) +  geom_point(alpha = 0.5, shape = 19) +
+ggplot(country_summary, aes(x = avg_sugar, 
+                            y = log_spending)) +  
+  geom_point(alpha = 0.5, shape = 19) +
   geom_smooth(method = "lm", se = TRUE, color = "steelblue") +
-  labs(title = "Average Health Spending vs. Sugar Consumption by Country",
-       x = "Average Daily Sugar Consumption (g per person)",
-       y = "Log of Average Health Spending (Intl $ per person)")
+  labs(title = "Log of Average Health Spending vs. Sugar Consumption by Country",
+       x = "Sugar Consumption (g/person/day)",
+       y = "Log(Health Spending, Intl $/person)",
+       subtitle = paste0("n = ", nrow(country_summary)))
 ```
 The upward-sloping regression line suggests that, in general, countries with higher sugar consumption tend to spend more on health care per person. However, the wide spread of the points around the line indicates that other factors beyond sugar intake likely influence health spending as well.
 
-### Animated Visualization: Sugar Consumption vs. Health Spending Over Time
+## Animated Visualization
 
-To examine how this relationship evolves over time, we created an animated plot showing annual trends from 1995–2010. Each frame displays data points for all countries in a single year, with the red line representing the year-specific linear trend.
+To examine how this relationship evolves over time, we created an animated plot showing annual trends from 1995–2010. Each frame displays data points for all countries in a single year, with the blue line representing the year-specific linear trend.
 
 ```{r animated_plot, message=FALSE, warning=FALSE}
 
@@ -187,7 +266,9 @@ sugar_spending_clean <- sugar_spending |>
   filter(!is.na(sugar) & !is.na(spending)) |>
   mutate(log_spending = log(spending))
 
-anim_plot <- ggplot(sugar_spending_clean, aes(x = sugar, y = log_spending)) +
+anim_plot <- ggplot(sugar_spending_clean, aes(x = sugar, 
+                                              y = log_spending,
+                                              group - country)) +
   geom_point(alpha = 0.5, shape = 19) +
   geom_smooth(method = "lm", se = FALSE, color = "steelblue") +
   labs(title = "Log(Health Spending) vs Sugar Consumption Over Time",
@@ -199,25 +280,27 @@ anim_plot <- ggplot(sugar_spending_clean, aes(x = sugar, y = log_spending)) +
 
 animate(anim_plot, nframes = 100, fps = 10, renderer = gifski_renderer())
 ```
-This animation shows how the relationship between sugar consumption (g/person/day) and health spending (Intl $/person) has changed across countries from 1995 to 2010. Each point represents a country in a given year, and the blue line shows the trend for that year using linear regression.
+This animation shows how the relationship between sugar consumption (g/person/day) and the log of health spending (Intl $/person) has changed across countries from 1995 to 2010. Each point represents a country in a given year, and the blue line shows the trend for that year using linear regression.
 
 While the overall association remains positive, the strength and spread of this relationship fluctuate. For example, from the late 1990s onward, some countries exhibit rapid increases in spending despite stable sugar levels, suggesting the influence of confounding factors such as economic development or healthcare policy.
 
 
 ## Linear Model
 
-To further examine the relationship between sugar consumption and health spending, we fit a linear regression model using average sugar consumption as the predictor and average health spending as the response, using country-level averages. We summarized our data set by averaging sugar consumption and health spending across all years by country. This stabilizes the trendline under animation, as it abstracts away intra-year fluctuations while still incorporating an adequately long period of data collection.
+To further examine the relationship between sugar consumption and health spending, we fit a linear regression using country-level means for sugar consumption and log-transformed per capita health spending across all years by country. This stabilizes the trendline under animation, as it abstracts away intra-year fluctuations while still incorporating an adequately long period of data collection.
 
 ```{r linear_model, results='hide'}
 lm_model <- lm(log_spending ~ avg_sugar, data = country_summary)
 model_summary <- summary(lm_model)
+adj_r2 <- model_summary$adj.r.squared
+resid_se <- model_summary$sigma
+df <- model_summary$df[2]
 model_summary
 ```
 
 We fit the following linear regression model:
-
 $$
-\hat{y} = 2.665 + .030x
+\widehat{\text{Health Spending}} = e^{2.665 + 0.030x} \approx 14.37 \cdot e^{0.030x}
 $$
 
 where $\hat{y}$ is the log curve applied to the average healthcare spending per person per year, and $x$ is average daily sugar intake (g/person/day).
@@ -239,8 +322,8 @@ kable(coefficients_df, caption = "Linear Regression Coefficients")
 # min_sugar
 ```
 
-### RE-INTERPRET
-The intercept implies that countries with near-zero sugar consumption would have an estimated health spending of $-503 (not interpretable in isolation). The minimum observed sugar consumption across all countries was approximately 7.618 grams/day, confirming that the intercept at ~ -503 is an extrapolation outside the data range. The slope indicates that for every additional gram of sugar consumed per person per day, a country's average health spending increases by approximately $14.04 per year, holding other factors constant.
+The intercept implies that countries with near-zero sugar consumption would have an estimated health spending of approximately \( e^{2.665} \approx 14.37 \) international dollars per person per year. However, since no countries in the dataset consume zero sugar, this estimate represents an extrapolation beyond the observed domain (minimum observed value: \( 7.618 \,\text{g/day} \)) and is not interpretable in isolation. The slope indicates that each additional gram of sugar consumed per person per day is associated with an estimated \( (e^{0.030} - 1) \times 100 \approx 3.05\% \) increase in average health spending per person, holding all else constant.
+
 
 ## Model Fit
 
@@ -275,11 +358,11 @@ kable(model_fit,
 
 ```
 
-The R² value of 0.248 indicates that sugar consumption explains 24.8% of the variability in health spending across countries. This suggests a moderate association, but also implies that 75.2% of spending variation is likely driven by a multitude of other factors, such as economic development or healthcare policy.
+The R² value of 0.579 indicates that sugar consumption explains 57.9% of the variability in health spending across countries. This suggests a moderate association, but also implies that 42.1% of spending variation is likely driven by a multitude of other factors, such as economic development or healthcare policy.
 
-# PC5: Cross Validation
 
-### Implement k-fold cross validation
+# Cross Validation
+
 ```{r}
 #0 choose a value for k, use as many folds as possible, keep the sample size in ea to be at least 10
 k <- 15
@@ -294,21 +377,27 @@ k_groups <- country_summary |>
                        size = n))
 
 compute_r2 <- function(fold_num, data){
+  # create training set by excluding fold x
   training <- filter(data, fold != fold_num)
-  testing <- filter(data, fold  == fold_num)
   
-  #fit regression model for all observations NOT in fold x
+  # create testing set by including only fold x
+  testing <- filter(data, fold == fold_num)
+  
+  # fit model on training set
   lm_model <- lm(log_spending ~ avg_sugar, data = training)
   
-  #use predict to generate predictions for observations that are in fold x (validation set)
+  # generate predictions for the test set
   predictions <- predict(lm_model, testing)
   
-  #calculate the model r2 for fold x (validation) as the variance of the fitted (predicted) values divided by the variance of the outcomeAdd commentMore actions
-  fitted_variance <- var(predictions)
-  outcome_variance <- var(testing$log_spending)
+  # calculate total sum of squares for test set
+  ss_total <- sum((testing$log_spending - mean(testing$log_spending))^2)
   
-  r_2 <- fitted_variance / outcome_variance
-    
+  # calculate residual sum of squares for test set
+  ss_res <- sum((testing$log_spending - predictions)^2)
+  
+  # compute R-squared for this fold
+  r_2 <- 1 - (ss_res / ss_total)
+  
   return(r_2)
 }
 
@@ -316,11 +405,11 @@ compute_r2 <- function(fold_num, data){
 #2 for fold i from 1...k 
 #end with a vector of k r^2 values
 performance <- map_dbl(1:k, ~compute_r2(.x, k_groups))
-performance
+# performance
 
 ```
 
-### Plot the results
+### K Fold Distribution
 ```{r}
 # r^2 vector into a data frame
 r2_df <- data.frame(
@@ -331,7 +420,7 @@ r2_df <- data.frame(
 mean_r2 <- mean(r2_df$r_squared)
 
 ggplot(r2_df, aes(x = r_squared)) +
-  geom_histogram(fill = "steelblue", color = "white", alpha = 0.8) +
+  geom_histogram(fill = "steelblue", color = "white", alpha = 0.7) +
   geom_vline(xintercept = mean_r2, color = "red", linetype = "dashed", size = 1) +
   labs(title = "Distribution of Cross-Validated R² Values",
        x = "R² Value",
@@ -342,18 +431,19 @@ ggplot(r2_df, aes(x = r_squared)) +
            label = paste0("Mean R² = ", round(mean_r2, 3)),
            color = "red",
            hjust = 0) +
-  xlim(0, 16)
+  xlim(-.3, .9)
 
 ```
-The histogram displays the distribution of R² values across the 15 folds used in cross-validation. The average R² is approximately 1.492, indicated by the red dashed line. This suggests that, on average, the model is capturing a substantial amount of variability in the validation sets, even exceeding 1. While R² values above 1 are not common in traditional in-sample regression, they can occur in predictive contexts, particularly in cross-validation where prediction errors are compared to variance within a fold.
+The histogram displays the distribution of R² values across the 15 folds used in cross-validation. The average R² is approximately .421, indicated by the red dashed line. This suggests that, on average, the model is capturing a limited amount of variability in the validation sets.
 
-The R² values across folds range from slightly below zero up to over 15, with one extreme outlier of 15.11. Most R² values fall between 0 and 1, indicating that the model generally performs moderately well in predicting unseen data. The variation in performance across folds suggests the model’s predictive power is sensitive to which countries are in each fold — likely reflecting regional, economic, or policy-driven differences in healthcare spending.
+Most R² values fall between 0 and 2, with a concentration near 0.25 to 0.75, indicating that the model often explains a moderate portion of the variability in health spending. However, the considerable variation in performance across folds suggests the model’s predictive power is sensitive to which countries are in each fold — likely reflecting regional, economic, or policy-driven differences in healthcare spending.
 
-There is no strong evidence of overfitting: the model performs decently on held-out data in most cases. However, the inconsistency across folds and the influence of the outlier suggest that additional predictors or a more flexible model may improve stability and overall fit.
+There is no strong evidence of overfitting: the model performs decently on held-out data in most cases. However, the inconsistency across folds suggests that additional predictors or a more flexible model may improve stability and overall fit.
 
 # References
-Berthold, J. (2023, April 21). Sugary drink tax improves health, lowers health care costs: Sweetened beverage purchases drop 27% in Oakland, signaling potential impact of national legislation. University of California, Berkeley. Sugary drink tax improves health, lowers health care costs. <https://publichealth.berkeley.edu/articles/spotlight/research/sugary-drink-tax-improves-health>
 
-Food and Agriculture Organization. (2024). FAOSTAT: Sugar & sweeteners food supply data. <http://data.un.org/Data.aspx?q=Sugar&d=FAO&f=itemCode:2909>
+Berthold, J. (2023, April 21). *Sugary drink tax improves health, lowers health care costs*. UC Berkeley School of Public Health. https://publichealth.berkeley.edu/articles/spotlight/research/sugary-drink-tax-improves-health
 
-World Health Organization. (2024). Global Health Expenditure Database. <https://apps.who.int/nha/database>
+Food and Agriculture Organization. (2024). *FAOSTAT: Sugar & sweeteners food supply data*. United Nations. http://data.un.org/Data.aspx?q=Sugar&d=FAO&f=itemCode:2909
+
+World Health Organization. (2024). *Global Health Expenditure Database*. https://apps.who.int/nha/database
