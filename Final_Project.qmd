@@ -16,6 +16,8 @@ execute:
 title-block-style: none
 author-title: none
 ---
+### Repository
+[Check out our code here!](https://github.com/halliec6/stat331)
 
 ```{r setup}
 # Load libraries
